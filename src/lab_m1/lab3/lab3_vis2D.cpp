@@ -110,7 +110,7 @@ void Lab3_Vis2D::FrameStart()
 
 void Lab3_Vis2D::Update(float deltaTimeSeconds)
 {
-    glm::ivec2 resolution = window->GetResolution();
+    glm::ivec2 resolution = window->props.resolution;
 
     // Sets the screen area where to draw - the left half of the window
     viewSpace = ViewportSpace(0, 0, resolution.x / 2, resolution.y);
@@ -168,8 +168,33 @@ void Lab3_Vis2D::OnInputUpdate(float deltaTime, int mods)
 {
     // TODO(student): Move the logic window with W, A, S, D (up, left, down, right)
 
+    if (window->KeyHold(GLFW_KEY_W)) {
+        logicSpace.y += deltaTime * 2;
+    }
+
+    if (window->KeyHold(GLFW_KEY_S)) {
+        logicSpace.y -= deltaTime * 2;
+    }
+
+    if (window->KeyHold(GLFW_KEY_A)) {
+        logicSpace.x -= deltaTime * 2;
+    }
+
+    if (window->KeyHold(GLFW_KEY_D)) {
+        logicSpace.x += deltaTime * 2;
+    }
+
     // TODO(student): Zoom in and zoom out logic window with Z and X
 
+    if (window->KeyHold(GLFW_KEY_Z)) {
+        logicSpace.width -= deltaTime * 2;
+        logicSpace.height -= deltaTime * 2;
+    }
+
+    if (window->KeyHold(GLFW_KEY_X)) {
+        logicSpace.width += deltaTime * 2;
+        logicSpace.height += deltaTime * 2;
+    }
 }
 
 

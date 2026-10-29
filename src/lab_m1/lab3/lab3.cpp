@@ -43,6 +43,8 @@ void Lab3::Init()
     // then in the `cx` and `cy` class variables (see the header). Use
     // `corner` and `squareSide`. These two class variables will be used
     // in the `Update()` function. Think about it, why do you need them?
+    cx = corner.x + squareSide / 2;
+    cy = corner.y + squareSide / 2;
 
     // Initialize tx and ty (the translation steps)
     translateX = 0;
@@ -54,6 +56,7 @@ void Lab3::Init()
 
     // Initialize angularStep
     angularStep = 0;
+    triangleMatrix = transform2D::Translate(1250, 750);
 
     Mesh* square1 = object2D::CreateSquare("square1", corner, squareSide, glm::vec3(1, 0, 0), true);
     AddMeshToList(square1);
@@ -63,6 +66,9 @@ void Lab3::Init()
 
     Mesh* square3 = object2D::CreateSquare("square3", corner, squareSide, glm::vec3(0, 0, 1));
     AddMeshToList(square3);
+
+    Mesh* triangle = object2D::CreateTriangle("triangle", corner, squareSide, glm::vec3(1, 1, 0));
+    AddMeshToList(triangle);
 }
 
 
@@ -84,13 +90,20 @@ void Lab3::Update(float deltaTimeSeconds)
     // in order to create animations. Use the class variables in the
     // class header, and if you need more of them to complete the task,
     // add them over there!
+    translateX += deltaTimeSeconds * 100;
+    translateY += deltaTimeSeconds * 100;
+
+    scaleX += deltaTimeSeconds;
+    scaleY += deltaTimeSeconds;
+
+    angularStep += glm::radians(90.0f) * deltaTimeSeconds;
 
     modelMatrix = glm::mat3(1);
     modelMatrix *= transform2D::Translate(150, 250);
     // TODO(student): Create animations by multiplying the current
     // transform matrix with the matrices you just implemented.
     // Remember, the last matrix in the chain will take effect first!
-
+    modelMatrix *= transform2D::Translate(translateX, translateY);
     RenderMesh2D(meshes["square1"], shaders["VertexColor"], modelMatrix);
 
     modelMatrix = glm::mat3(1);
@@ -98,6 +111,9 @@ void Lab3::Update(float deltaTimeSeconds)
     // TODO(student): Create animations by multiplying the current
     // transform matrix with the matrices you just implemented
     // Remember, the last matrix in the chain will take effect first!
+    modelMatrix *= transform2D::Translate(cx, cy);
+    modelMatrix *= transform2D::Rotate(angularStep);
+    modelMatrix *= transform2D::Translate(-cx, -cy);
 
     RenderMesh2D(meshes["square2"], shaders["VertexColor"], modelMatrix);
 
@@ -106,8 +122,29 @@ void Lab3::Update(float deltaTimeSeconds)
     // TODO(student): Create animations by multiplying the current
     // transform matrix with the matrices you just implemented
     // Remember, the last matrix in the chain will take effect first!
-
+    modelMatrix *= transform2D::Translate(cx, cy);
+    modelMatrix *= transform2D::Scale(scaleX, scaleY);
+    modelMatrix *= transform2D::Translate(-cx, -cy);
     RenderMesh2D(meshes["square3"], shaders["VertexColor"], modelMatrix);
+
+    float deltaAngle = glm::radians(90.0f) * deltaTimeSeconds;
+    if (rotate_corner_triangle == 0) {
+        triangleMatrix *= transform2D::Translate(0, 0);
+        triangleMatrix *= transform2D::Rotate(deltaAngle);
+        triangleMatrix *= transform2D::Translate(0, 0);
+    }
+    else if (rotate_corner_triangle == 1) {
+        triangleMatrix *= transform2D::Translate(100, 0);
+        triangleMatrix *= transform2D::Rotate(deltaAngle);
+        triangleMatrix *= transform2D::Translate(-100, 0);
+    }
+    else if (rotate_corner_triangle == 2) {
+        triangleMatrix *= transform2D::Translate(50, 100);
+        triangleMatrix *= transform2D::Rotate(deltaAngle);
+        triangleMatrix *= transform2D::Translate(-50, -100);
+    }
+
+    RenderMesh2D(meshes["triangle"], shaders["VertexColor"], triangleMatrix);
 }
 
 
@@ -130,6 +167,15 @@ void Lab3::OnInputUpdate(float deltaTime, int mods)
 void Lab3::OnKeyPress(int key, int mods)
 {
     // Add key press event
+    if (key == GLFW_KEY_1) {
+        rotate_corner_triangle = 0;
+    }
+    else if (key == GLFW_KEY_2) {
+        rotate_corner_triangle = 1;
+    }
+    else if (key == GLFW_KEY_3) {
+        rotate_corner_triangle = 2;
+    }
 }
 
 

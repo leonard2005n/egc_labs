@@ -23,6 +23,7 @@ Lab2::Lab2()
 
 Lab2::~Lab2()
 {
+
 }
 
 
@@ -42,7 +43,15 @@ void Lab2::Init()
     {
         vector<VertexFormat> vertices
         {
-            VertexFormat(glm::vec3(-1, -1,  1), glm::vec3(0, 1, 1), glm::vec3(0.2, 0.8, 0.6)),
+            VertexFormat(glm::vec3(0, 0, 1)),
+            VertexFormat(glm::vec3(1, 0, 1)),
+            VertexFormat(glm::vec3(0, 1, 1)),
+            VertexFormat(glm::vec3(1, 1, 1)),
+            VertexFormat(glm::vec3(0, 0, 0)),
+            VertexFormat(glm::vec3(1, 0, 0)),
+            VertexFormat(glm::vec3(0, 1, 0)),
+            VertexFormat(glm::vec3(1, 1, 0)),
+
             // TODO(student): Complete the vertices data for the cube mesh
 
         };
@@ -51,6 +60,16 @@ void Lab2::Init()
         {
             0, 1, 2,    // indices for first triangle
             1, 3, 2,    // indices for second triangle
+            2, 3, 7,    // ...
+            2, 7, 6,
+            1, 7, 3,
+            1, 5, 7,
+            6, 7, 4,
+            7, 5, 4,
+            0, 4, 1,
+            1, 4, 5,
+            2, 6, 4,
+            0, 2, 4
             // TODO(student): Complete indices data for the cube mesh
 
         };
@@ -68,8 +87,133 @@ void Lab2::Init()
     // would you do it? After all, a tetrahedron has only 4 vertices
     // by definition!
 
+    {
+        vector<VertexFormat> vertices
+        {
+            VertexFormat(glm::vec3(0, 0, 1)),
+            VertexFormat(glm::vec3(1, 0, 0)),
+            VertexFormat(glm::vec3(-1, 0, 0)),
+            VertexFormat(glm::vec3(0, 1, 0))
+
+        };
+
+        vector<unsigned int> indices =
+        {
+            0, 1, 2,
+            0, 3, 1,
+            0, 2, 3, 
+            1, 3, 2
+
+        };
+
+        meshes["tetrahedron"] = new Mesh("generated tetrahedron");
+        meshes["tetrahedron"]->InitFromData(vertices, indices);
+
+        CreateMesh("tetrahedron", vertices, indices);
+    }
+
     // TODO(student): Create a square using two triangles with
     // opposing vertex orientations.
+
+    {
+        vector<VertexFormat> vertices
+        {
+            VertexFormat(glm::vec3(0, 0, 0)),
+            VertexFormat(glm::vec3(1, 0, 0)),
+            VertexFormat(glm::vec3(1, 1, 0)),
+            VertexFormat(glm::vec3(0, 1, 0))
+        };
+
+        vector<unsigned int> indices =
+        {
+            0, 1, 2,
+            3, 2, 0
+
+        };
+        meshes["square"] = new Mesh("generated square");
+        meshes["square"]->InitFromData(vertices, indices);
+
+        CreateMesh("square", vertices, indices);
+    }
+
+    // rectangular prism mesh in upright position and skinny
+    {
+        vector<VertexFormat> vertices =
+        {
+            VertexFormat(glm::vec3(0.0f,     0.0f, 0.02f)), 
+            VertexFormat(glm::vec3(0.02f,    0.0f, 0.02f)), 
+            VertexFormat(glm::vec3(0.02f,    0.0f, 0.0f)), 
+            VertexFormat(glm::vec3(0.0f,     0.0f, 0.0f)), 
+            VertexFormat(glm::vec3(0.0f,     3.0f, 0.02f)),
+            VertexFormat(glm::vec3(0.02f,    3.0f, 0.02f)), 
+            VertexFormat(glm::vec3(0.02f,    3.0f, 0.0f)), 
+            VertexFormat(glm::vec3(0.0f,     3.0f, 0.0f))   
+        };
+
+        vector<unsigned int> indices =
+        {
+            0, 1, 5,
+            0, 5, 4,
+            1, 2, 6,
+            1, 6, 5,
+            2, 3, 7,
+            2, 7, 6,
+            3, 0, 4,
+            3, 4, 7,
+            3, 2, 1,
+            3, 1, 0,
+            4, 5, 6,
+            4, 6, 7
+        };
+
+        meshes["rectangular"] = new Mesh("generated rectangular");
+        meshes["rectangular"]->InitFromData(vertices, indices);
+
+        CreateMesh("rectangular", vertices, indices);
+    }
+
+    //Drapel dreptunghi colorat in 3 culori albastru galben rosu
+    
+        {
+            vector<VertexFormat> vertices
+            {
+                // ================= BANDA 1: ALBASTRU (X: 0.0 -> 1.0) =================
+                VertexFormat(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0, 0, 1)), // 0: stânga-jos
+                VertexFormat(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0, 0, 1)), // 1: dreapta-jos
+                VertexFormat(glm::vec3(1.0f, 2.0f, 0.0f), glm::vec3(0, 0, 1)), // 2: dreapta-sus
+                VertexFormat(glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(0, 0, 1)), // 3: stânga-sus
+        
+                // ================= BANDA 2: GALBEN (X: 1.0 -> 2.0) ===================
+                VertexFormat(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1, 1, 0)), // 4: stânga-jos
+                VertexFormat(glm::vec3(2.0f, 0.0f, 0.0f), glm::vec3(1, 1, 0)), // 5: dreapta-jos
+                VertexFormat(glm::vec3(2.0f, 2.0f, 0.0f), glm::vec3(1, 1, 0)), // 6: dreapta-sus
+                VertexFormat(glm::vec3(1.0f, 2.0f, 0.0f), glm::vec3(1, 1, 0)), // 7: stânga-sus
+        
+                // ================= BANDA 3: ROȘU (X: 2.0 -> 3.0) =====================
+                VertexFormat(glm::vec3(2.0f, 0.0f, 0.0f), glm::vec3(1, 0, 0)), // 8: stânga-jos
+                VertexFormat(glm::vec3(3.0f, 0.0f, 0.0f), glm::vec3(1, 0, 0)), // 9: dreapta-jos
+                VertexFormat(glm::vec3(3.0f, 2.0f, 0.0f), glm::vec3(1, 0, 0)), // 10: dreapta-sus
+                VertexFormat(glm::vec3(2.0f, 2.0f, 0.0f), glm::vec3(1, 0, 0))  // 11: stânga-sus
+            };
+        
+            vector<unsigned int> indices =
+            {
+                // Triunghiuri pentru Banda Albastră
+                0, 1, 2,
+                0, 2, 3,
+        
+                // Triunghiuri pentru Banda Galbenă
+                4, 5, 6,
+                4, 6, 7,
+        
+                // Triunghiuri pentru Banda Roșie
+                8, 9, 10,
+                8, 10, 11
+            };
+        
+            // Apelăm doar CreateMesh (care gestionează alocarea și salvarea în meshes)
+            CreateMesh("drapel", vertices, indices);
+        }
 
 }
 
@@ -78,16 +222,23 @@ void Lab2::CreateMesh(const char *name, const std::vector<VertexFormat> &vertice
 {
     unsigned int VAO = 0;
     // TODO(student): Create the VAO and bind it
-
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+    
     unsigned int VBO = 0;
     // TODO(student): Create the VBO and bind it
-
+    glGenBuffers(1, &VBO);
     // TODO(student): Send vertices data into the VBO buffer
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
 
     unsigned int IBO = 0;
     // TODO(student): Create the IBO and bind it
+    glGenBuffers(1, &IBO);
 
     // TODO(student): Send indices data into the IBO buffer
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[0]) * indices.size(), &indices[0], GL_STATIC_DRAW);
 
     // ========================================================================
     // This section demonstrates how the GPU vertex shader program
@@ -114,6 +265,7 @@ void Lab2::CreateMesh(const char *name, const std::vector<VertexFormat> &vertice
     // ========================================================================
 
     // TODO(student): Unbind the VAO
+    glBindVertexArray(0);
 
     // Check for OpenGL errors
     if (GetOpenGLError() == GL_INVALID_OPERATION)
@@ -134,7 +286,7 @@ void Lab2::FrameStart()
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::ivec2 resolution = window->GetResolution();
+    glm::ivec2 resolution = window->GetResolution() / 2;
 
     // Sets the screen area where to draw
     glViewport(0, 0, resolution.x, resolution.y);
@@ -148,23 +300,36 @@ void Lab2::Update(float deltaTimeSeconds)
     glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
 
     // TODO(student): Enable face culling
+    glEnable(GL_CULL_FACE);
 
     // TODO(student): Set face custom culling. Use the `cullFace` variable.
+    glCullFace(cullFace);
+    
 
     // Render an object using face normals for color
     RenderMesh(meshes["box"], shaders["VertexNormal"], glm::vec3(0, 0.5f, -1.5f), glm::vec3(0.75f));
 
     // Render an object using colors from vertex
     RenderMesh(meshes["cube_A"], shaders["VertexColor"], glm::vec3(-1.5f, 0.5f, 0), glm::vec3(0.25f));
+    RenderMesh(meshes["cube_B"], shaders["VertexColor"], glm::vec3(-3.5f, 0.5f, 0), glm::vec3(0.25f));
 
     // TODO(student): Draw the mesh that was created with `CreateMesh()`
+    CreateMesh("cube_C", meshes["cube_A"]->vertices, meshes["cube_A"]->indices);
+    RenderMesh(meshes["cube_C"], shaders["VertexColor"], glm::vec3(-5.5f, 0.5f, 0), glm::vec3(0.25f));
 
     // TODO(student): Draw the tetrahedron
+    RenderMesh(meshes["tetrahedron"], shaders["VertexColor"], glm::vec3(1.5f, 0.5f, 0), glm::vec3(0.25f));
 
     // TODO(student): Draw the square
+    
+    RenderMesh(meshes["square"], shaders["VertexColor"], glm::vec3(3.5f, 0.5f, 0), glm::vec3(0.25f));
+
+    // steagul romaniei
 
     // TODO(student): Disable face culling
-
+    glDisable(GL_CULL_FACE);
+    RenderMesh(meshes["rectangular"], shaders["VertexColor"], glm::vec3(5.5f, 0.5f, 0), glm::vec3(0.25f));
+    RenderMesh(meshes["drapel"], shaders["VertexColor"], glm::vec3(5.5f, 0.7f, 0), glm::vec3(0.25f));
 }
 
 
@@ -203,6 +368,19 @@ void Lab2::OnKeyPress(int key, int mods)
             break;
         default:
             polygonMode = GL_LINE;
+            break;
+        }
+    }
+
+    if (key == GLFW_KEY_F2)
+    {
+        switch (cullFace)
+        {
+        case GL_FRONT:
+            cullFace = GL_BACK;
+            break;
+        default:
+            cullFace = GL_FRONT;
             break;
         }
     }

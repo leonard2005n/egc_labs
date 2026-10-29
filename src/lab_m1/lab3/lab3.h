@@ -33,8 +33,8 @@ namespace m1
         float translateX, translateY;
         float scaleX, scaleY;
         float angularStep;
-
+        glm::mat3 triangleMatrix = glm::mat3(1.0f);
         // TODO(student): If you need any other class variables, define them here.
-
+         int rotate_corner_triangle = 0;
     };
 }   // namespace m1
