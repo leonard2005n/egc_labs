@@ -13,8 +13,14 @@ Jucatorul de jos este controlat cu mouse-ul, iar adversarul de sus este controla
 - **R** incepe un meci nou. La final exista si butonul **JOC NOU**.
 
 Fiecare carte vizibila are **doua sabii incrucisate in stanga-jos pentru atac**,
-o **inima rosie in dreapta-jos pentru viata ramasa** si un **cerc albastru in stanga-sus pentru costul de mana**.
-Un contur verde indica un atac disponibil; conturul galben marcheaza atacatorul ales.
+o **inima rosie in dreapta-jos pentru viata ramasa** si un **cristal albastru fatetat in stanga-sus pentru costul de mana**.
+Fundalul dreptunghiular este rosu pentru luptator, albastru pentru mag si verde pentru garda.
+Un contur verde indica o carte din mana care poate fi jucata sau o creatura care poate ataca;
+conturul galben marcheaza cartea trasa sau atacatorul ales.
+
+Mana ambilor eroi foloseste aceleasi cristale fatetate: albastre pentru resursele disponibile
+si gri pentru cele consumate. Zonele de selectie ale cristalelor de pe carti urmeaza
+conturul poligonal, inclusiv varfurile iesite din carte si scalarea la hover/selectare.
 
 Eroii sunt centrati sus si jos. Mana proprie este grupata pe un arc discret in dreapta-jos,
 iar mana adversa este in stanga-sus. Cartile jucate sunt centrate pe doua randuri compacte,
@@ -45,11 +51,37 @@ folosesc aceeasi asezare, inclusiv marginile bulinelor care ies din conturul car
 
 ## Organizarea codului
 
-- `Card` pastreaza atacul, viata, costul, efectele speciale si disponibilitatea atacului.
-- `Hero` pastreaza viata eroului si atacul lui zero.
-- `Player` detine mana, pachetul, tabla, eroul si mana disponibila/maxima.
-- `CardGame` gestioneaza turele, extragerea, validarea actiunilor, lupta si victoria, fara OpenGL.
-- `Tema1` transforma input-ul in actiuni de joc si pastreaza separat randarea, hover-ul si animatiile.
+Fiecare clasa are un header cu interfata si fisiere `.cpp` pentru implementare.
+
+Componentele sunt grupate dupa responsabilitate:
+
+- `model/`: carti, catalog, eroi, jucatori si regulile meciului.
+- `ai/`: alegerea actiunilor calculatorului.
+- `presentation/`: asezare, interactiuni si animatii.
+- `rendering/`: randare, mesh-uri si stil vizual.
+- `config/`: constante pentru reguli si animatii.
+- `tema1.*`, `tema1_input.cpp`, `tema1_combat.cpp`: scena si integrarea cu framework-ul.
+
+Include-urile folosesc cai complete pornind din `src/`. CMake descopera recursiv
+fisierele din subfoldere; dupa mutari, regenerati configuratia inainte de build.
+Laboratorul 4 ramane separat in `lab_m1/lab4/`; scena pornita este aleasa in `src/main.cpp`.
+
+| Clasa | Responsabilitate | Fisiere |
+| --- | --- | --- |
+| `Card`, `Hero`, `Player` | Datele si operatiile creaturilor, eroilor si jucatorilor, fara OpenGL. | `model/card.*`, `model/hero.*`, `model/player.*` |
+| `CardCatalog` | Definitii de carti, exemplare, etichete si prioritati Silence. | `model/card_catalog.*` |
+| `CardGame` | Ture, extragere, validarea actiunilor, lupta si victorie. | `model/card_game.*` |
+| `ComputerPlayer` | Alege actiunea calculatorului si prioritatea tintelor Silence; nu modifica meciul. | `ai/computer_player.*` |
+| `GameLayout` | Pozitii, viewport, conversia mouse-ului si zone de selectie. Constantele comune sunt in `game_view`. | `presentation/game_layout.*` |
+| `RowAnimation` | Interpoleaza pozitiile unui rand de carti. | `presentation/row_animation.*` |
+| `GamePresentation` | Selectii, hover, drag, spinner, mesaje si starea animatiilor. | `presentation/game_presentation.*` |
+| `GameMeshFactory` | Construieste geometria reutilizata pentru tabla, carti si simboluri. | `rendering/game_mesh_factory.*` |
+| `GameRenderer` | Deseneaza meciul folosind starea vizuala doar pentru citire; detine mesh-urile si fontul. | `rendering/game_renderer.*`, `rendering/game_renderer_cards.cpp`, `rendering/game_renderer_effects.cpp` |
+| `Tema1` | Conecteaza evenimentele framework-ului cu regulile si prezentarea; pastreaza ordinea actualizarilor si momentul damage-ului. | `tema1.*`, `tema1_input.cpp`, `tema1_combat.cpp` |
+
+Pentru schimbari de reguli, punctul de plecare este `CardGame`. Pentru input, vezi
+`tema1_input.cpp`; pentru sincronizarea luptei cu animatia, `tema1_combat.cpp`.
+Randarea nu modifica regulile sau starea vizuala.
 
 Animatiile de extragere, regrupare si revenire folosesc interpolare liniara bazata pe timpul dintre cadre.
 Hover-ul si selectia folosesc interpolare exponentiala pentru scalare, inclusiv textul si simbolurile; hit-test-ul aplica aceeasi transformare.
@@ -58,6 +90,20 @@ Damage-ul simultan se aplica o singura data la contact (0.30 secunde); eliminare
 La expirarea timerului, un atac deja confirmat isi aplica damage-ul o singura data inainte de schimbarea turei.
 Input-ul este blocat in timpul deplasarilor si al turei calculatorului pentru a pastra pozitiile sincronizate cu datele; scalarea nu blocheaza alegerea cartilor.
 
+## Configurare si evitarea valorilor duplicate
+
+- `config/game_rules.h`: viata initiala, mana, mana maxima, marimea mainii initiale, durata turei si identitatea jucatorilor.
+- `model/card_catalog.cpp`: compozitia pachetului. Algoritmul genereaza pachetul din numarul de exemplare al fiecarui model; nu presupune sase modele sau 30 de carti. Efectele si prioritatile Silence sunt date explicite, independente de cost.
+- `presentation/game_layout.h`: dimensiuni, margini si ancore. Eroii, mainile, pachetele si panourile se pozitioneaza relativ la scena si la zonele comune de joc.
+- `config/animation_config.h`: durate, viteze si amplitudini folosite impreuna de controller si renderer.
+- `rendering/game_style.*`: aspect, straturi grafice si texte. `Artwork` descrie un desen local pe care rendererul il aseaza intr-un dreptunghi destinatie. Badge-urile au aceeasi definitie pentru desenare si selectie.
+- `rendering/mesh_data.*`: contururile locale ale simbolurilor si rezolutia geometriei procedurale.
+
+Valorile care descriu echilibrarea, culorile sau forma artistica raman date de
+configurare explicite. Calculele de asezare, construirea pachetului si randarea
+folosesc aceste date prin rutine comune. Matricile de transformare, interpolarea
+si formulele geometrice pastreaza constantele matematice necesare.
+
 ## Verificare
 
 Din radacina proiectului:
@@ -65,10 +111,18 @@ Din radacina proiectului:
 ```sh
 cmake -S . -B build
 cmake --build build -j 2
-c++ -std=c++11 -Wall -Wextra -pedantic -Isrc src/tests/tema1_rules.cpp src/lab_m1/tema_1/card_game.cpp -o /tmp/tema1-rules-tests
-/tmp/tema1-rules-tests
+bash src/tests/run_tema1_tests.sh
 ```
 
 Testele regulilor verifica alegerea aleatorie a primului jucator si alternarea corecta pentru ambii, amestecarea independenta, pastrarea compozitiei pachetelor, distributia initiala, mana, alternarea turelor, extragerea unica,
 asteptarea dupa plasare, atacul unic, damage-ul simultan, eliminarea creaturilor,
 victoria ambilor jucatori, blocarea dupa final, restartul, pachetele goale, Charge, Tank, Lifesteal si alegerea/efectele Silence.
+
+Testele prezentarii ruleaza fara fereastra OpenGL si verifica durata spinnerului,
+blocarea input-ului, viewport-ul, selectia cartilor suprapuse si scalate, revenirea
+cartilor, terminarea animatiilor si prioritatile calculatorului. GLFW este necesar
+doar la linkare pentru functiile de conversie a coordonatelor.
+
+Testele configurarii verifica un pachet diferit de cel implicit (inclusiv numere
+inegale de exemplare), asezarea desenelor in alte dreptunghiuri si ancorele
+badge-urilor la dimensiuni diferite ale cartilor.

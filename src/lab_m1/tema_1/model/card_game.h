@@ -2,7 +2,8 @@
 
 #include <random>
 
-#include "lab_m1/tema_1/player.h"
+#include "lab_m1/tema_1/model/player.h"
+#include "lab_m1/tema_1/config/game_rules.h"
 
 namespace m1
 {
@@ -34,9 +35,9 @@ namespace m1
 
      private:
         std::mt19937 randomGenerator{std::random_device{}()};
-        Player players[2];
-        int activePlayer = 0;
-        int winner = -1;
+        Player players[game_rules::PlayerCount];
+        int activePlayer = game_rules::HumanPlayer;
+        int winner = game_rules::NoWinner;
         bool turnDrawPending = false;
         bool silencePending = false;
     };

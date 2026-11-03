@@ -1,6 +1,10 @@
-#include "lab_m1/tema_1/card_game.h"
+#include "lab_m1/tema_1/model/card_game.h"
+#include "lab_m1/tema_1/model/card_catalog.h"
+
+#include <algorithm>
 
 using namespace m1;
+using namespace m1::game_rules;
 
 // Construieste acelasi meci initial ca la apasarea butonului de restart.
 CardGame::CardGame()
@@ -8,28 +12,21 @@ CardGame::CardGame()
     Reset();
 }
 
-// Amesteca independent cele 30 de carti inainte de impartirea fiecarei maini.
+// Amesteca independent pachetul din catalog inainte de impartirea fiecarei maini.
 void CardGame::Reset()
 {
-    const std::vector<Card> types = {
-        Card(CardType::Triangle, 1, 2, 1),
-        Card(CardType::Diamond, 2, 3, 2, CardEffect::Charge),
-        Card(CardType::Square, 3, 4, 3, CardEffect::Tank),
-        Card(CardType::Triangle, 4, 4, 4, CardEffect::Lifesteal),
-        Card(CardType::Diamond, 5, 5, 5, CardEffect::Silence),
-        Card(CardType::Square, 6, 6, 6, CardEffect::Tank | CardEffect::Lifesteal)
-    };
-    std::vector<Card> cards;
-    for (int i = 0; i < 30; ++i) {
-        cards.push_back(types[i % types.size()]);
-    }
-    for (int owner = 0; owner < 2; ++owner) {
+    std::vector<Card> cards = CardCatalog::CreateDeck();
+
+    for (int owner = 0; owner < PlayerCount; ++owner) {
         std::shuffle(cards.begin(), cards.end(), randomGenerator);
-        players[owner] = Player(std::vector<Card>(cards.begin(), cards.begin() + 5),
-                                std::vector<Card>(cards.begin() + 5, cards.end()));
+
+        // Impartirea ramane valida si daca definitiile unui pachet sunt mai putine.
+        const auto handEnd = cards.begin() + std::min(InitialHandSize, cards.size());
+        players[owner] = Player(std::vector<Card>(cards.begin(), handEnd), std::vector<Card>(handEnd, cards.end()));
     }
-    activePlayer = std::uniform_int_distribution<int>(0, 1)(randomGenerator);
-    winner = -1;
+
+    activePlayer = std::uniform_int_distribution<int>(0, PlayerCount - 1)(randomGenerator);
+    winner = NoWinner;
     turnDrawPending = false;
     silencePending = false;
     players[activePlayer].BeginTurn();
@@ -41,9 +38,11 @@ bool CardGame::EndTurn()
     if (IsFinished() || turnDrawPending || silencePending) {
         return false;
     }
-    activePlayer = 1 - activePlayer;
+
+    activePlayer = OpponentOf(activePlayer);
     players[activePlayer].BeginTurn();
     turnDrawPending = true;
+
     return true;
 }
 
@@ -53,7 +52,9 @@ bool CardGame::DrawTurnCard()
     if (IsFinished() || !turnDrawPending) {
         return false;
     }
+
     turnDrawPending = false;
+
     return players[activePlayer].DrawCard();
 }
 
@@ -63,37 +64,45 @@ bool CardGame::PlayCard(std::size_t index)
     if (IsFinished() || turnDrawPending || silencePending || !players[activePlayer].PlayCard(index)) {
         return false;
     }
+
     silencePending = players[activePlayer].GetBoard().back().HasEffect(CardEffect::Silence) &&
-                     !players[1 - activePlayer].GetBoard().empty();
+                     !players[OpponentOf(activePlayer)].GetBoard().empty();
+
     return true;
 }
 
 // Silence este o alegere obligatorie la plasare, fara un cost suplimentar.
 bool CardGame::ChooseSilenceTarget(std::size_t targetIndex)
 {
-    if (IsFinished() || !silencePending || targetIndex >= players[1 - activePlayer].GetBoard().size()) {
+    if (IsFinished() || !silencePending || targetIndex >= players[OpponentOf(activePlayer)].GetBoard().size()) {
         return false;
     }
-    players[1 - activePlayer].SilenceCard(targetIndex);
+
+    players[OpponentOf(activePlayer)].SilenceCard(targetIndex);
     silencePending = false;
+
     return true;
 }
 
 // Tank protejeaza toate celelalte creaturi si eroul pana cand toate tank-urile dispar.
 bool CardGame::CanAttack(std::size_t attackerIndex, int targetIndex) const
 {
-    if (IsFinished() || turnDrawPending || silencePending || targetIndex < -1) {
+    if (IsFinished() || turnDrawPending || silencePending || targetIndex < HeroTarget) {
         return false;
     }
+
     const auto& attackers = players[activePlayer].GetBoard();
-    const auto& defenders = players[1 - activePlayer].GetBoard();
+    const auto& defenders = players[OpponentOf(activePlayer)].GetBoard();
+
     if (attackerIndex >= attackers.size() || !attackers[attackerIndex].CanAttack() ||
         (targetIndex >= 0 && static_cast<std::size_t>(targetIndex) >= defenders.size())) {
         return false;
     }
+
     const bool hasTank = std::any_of(defenders.begin(), defenders.end(), [](const Card& card) {
         return card.HasEffect(CardEffect::Tank);
     });
+
     return !hasTank || (targetIndex >= 0 && defenders[targetIndex].HasEffect(CardEffect::Tank));
 }
 
@@ -103,12 +112,14 @@ bool CardGame::Attack(std::size_t attackerIndex, int targetIndex)
     if (!CanAttack(attackerIndex, targetIndex)) {
         return false;
     }
+
     Player& attacker = players[activePlayer];
-    Player& defender = players[1 - activePlayer];
+    Player& defender = players[OpponentOf(activePlayer)];
     const bool lifesteal = attacker.GetBoard()[attackerIndex].HasEffect(CardEffect::Lifesteal);
     const int attackDamage = attacker.GetBoard()[attackerIndex].GetAttack();
     attacker.ExhaustCard(attackerIndex);
-    if (targetIndex == -1) {
+
+    if (targetIndex == HeroTarget) {
         defender.DamageHero(attackDamage);
     } else {
         // Memoreaza ambele atacuri inainte de damage, astfel incat loviturile sa fie simultane.
@@ -118,11 +129,14 @@ bool CardGame::Attack(std::size_t attackerIndex, int targetIndex)
         attacker.RemoveDeadCards();
         defender.RemoveDeadCards();
     }
+
     if (lifesteal) {
         attacker.HealHero(attackDamage);
     }
+
     if (defender.GetHero().GetHealth() == 0) {
         winner = activePlayer;
     }
+
     return true;
 }
